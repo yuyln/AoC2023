@@ -86,22 +86,14 @@ int64_t get_number(char *str, uint64_t s) {
     in f = {0};
     in l = {0};
 
-    if (f_str.index == -1)
+    if (f_str.index == -1 || f_index.index < f_str.index)
         f = f_index;
-    else if (f_index.index == -1)
-        f = f_str;
-    else if (f_index.index < f_str.index)
-        f = f_index;
-    else if (f_str.index < f_index.index)
+    else if (f_index.index == -1 || f_str.index < f_index.index)
         f = f_str;
 
-    if (l_str.index == -1)
+    if (l_str.index == -1 || l_index.index > l_str.index)
         l = l_index;
-    else if (l_index.index == -1)
-        l = l_str;
-    else if (l_index.index > l_str.index)
-        l = l_index;
-    else if (l_str.index > l_index.index)
+    else if (l_index.index == -1 || l_str.index > l_index.index)
         l = l_str;
 
     return 10 * f.number + l.number;
