@@ -4,11 +4,6 @@
 #include <inttypes.h>
 #include <string.h>
 
-typedef struct {
-    int64_t index;
-    int number;
-} in;
-
 const char *digits[] = {"zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
 static uint64_t digits_len[10] = {0};
 
@@ -20,83 +15,28 @@ int char_to_int(char c) {
     return is_number(c)? c - 0x30: 0;
 }
 
-in index_first_number(char *str, uint64_t s) {
-    for (uint64_t i = 0; i < s; ++i)
-        if (is_number(str[i]))
-            return (in) {.index = i, .number = char_to_int(str[i])};
-    return (in) {.index = -1, .number = 0};
-}
-
-in index_last_number(char *str, uint64_t s) {
-    for (uint64_t i = s; i-->0;)
-        if (is_number(str[i]))
-            return (in) {.index = i, .number = char_to_int(str[i])};
-    return (in) {.index = -1, .number = 0};
-}
-
-in first_str_number(char *str, uint64_t s) {
-    for (uint64_t i = 0; i < s; ++i) {
-        for (int dig = 0; dig < 10; ++dig) {
-            if (i + digits_len[dig] >= s)
-                continue;
-            if (strncmp(&str[i], digits[dig], digits_len[dig]) == 0)
-                return (in){.index = i, .number = dig};
-        }
-    }
-    return (in){.index = -1, .number = 0};
-}
-
-in last_str_number(char *str, uint64_t s) {
-    for (uint64_t i = s; i-->0;) {
-        for (int dig = 0; dig < 10; ++dig) {
-            if (i < digits_len[dig])
-                continue;
-            if (strncmp(&str[i - digits_len[dig] + 1], digits[dig], digits_len[dig]) == 0)
-                return (in){.index = i - digits_len[dig] + 1, .number = dig};
-        }
-    }
-    return (in){.index = -1, .number = 0};
-}
-
-int64_t get_number_index(char *str, uint64_t s) {
-    in f = index_first_number(str, s);
-    in l = index_last_number(str, s);
-    if (f.index < 0 || l.index < 0) {
-        //fprintf(stderr, "Error, negative index");
-        return -1;
-    }
-    return 10 * f.number + l.number;
-}
-
-int64_t get_number_str(char *str, uint64_t s) {
-    in f = first_str_number(str, s);
-    in l = last_str_number(str, s);
-    if (f.index < 0 || l.index < 0) {
-        //fprintf(stderr, "Error, negative index");
-        return -1;
-    }
-    return 10 * f.number + l.number;
-}
-
 int64_t get_number(char *str, uint64_t s) {
-    in f_index = index_first_number(str, s);
-    in l_index = index_last_number(str, s);
-    in f_str = first_str_number(str, s);
-    in l_str = last_str_number(str, s);
-    in f = {0};
-    in l = {0};
+    int64_t left = -1;
+    int64_t right = -1;
+    for (uint64_t i = 0; i < s; ++i) {
+        if (is_number(str[i]) && left == -1)
+            left = char_to_int(str[i]);
+        if (is_number(str[i]))
+            right = char_to_int(str[i]);
 
-    if (f_str.index == -1 || f_index.index < f_str.index)
-        f = f_index;
-    else if (f_index.index == -1 || f_str.index < f_index.index)
-        f = f_str;
-
-    if (l_str.index == -1 || l_index.index > l_str.index)
-        l = l_index;
-    else if (l_index.index == -1 || l_str.index > l_index.index)
-        l = l_str;
-
-    return 10 * f.number + l.number;
+        for (int dig = 0; dig < 10; ++dig) {
+            if (i + digits_len[dig] - 1 >= s)
+                continue;
+            if (strncmp(&str[i], digits[dig], digits_len[dig]) == 0) {
+                if (left == -1)
+                    left = dig;
+                right = dig;
+            }
+        }
+    }
+    if (left < 0 || right < 0)
+        return -1;
+    return 10 * left + right;
 }
 
 int64_t find_char(char *str, char c, uint64_t start, uint64_t end) {
@@ -144,12 +84,10 @@ int main(void) {
         if (end < 0)
             break;
         uint64_t size = end - start;
-        int64_t number_from_index = get_number_index(&data[start], size);
-        int64_t number_from_str = get_number_str(&data[start], size);
         int64_t number = get_number(&data[start], size);
         if (number < 0)
             continue;
-        printf("%.*s -> %"PRIi64"  %"PRIi64" => %"PRIi64"\n", size, &data[start], number_from_index, number_from_str, number);
+        printf("%.*s => %"PRIi64"\n", size, &data[start], number);
         sum += (uint64_t)number;
 
         i_ext = end + 1;
