@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #define MAXR 12
 #define MAXG 13
@@ -38,13 +39,14 @@ static uint64_t colors_s[] = {0, 0, 0};
  Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
  */
 
-int main(void) {
+int main(int argc, const char **argv) {
+    assert(argc >= 2);
     for (int i = 0; i < 3; ++i)
         colors_s[i] = strlen(colors[i]);
 
-    FILE *f = fopen("./input.dat", "rb");
+    FILE *f = fopen(argv[1], "rb");
     if (!f) {
-        fprintf(stderr, "Could not open input.dat\n");
+        fprintf(stderr, "Could not open %s\n", argv[1]);
         return 1;
     }
     fseek(f, 0, SEEK_END);
@@ -76,12 +78,14 @@ int main(void) {
             line += 1;
         }
     }
-    uint64_t sum_id = 0;
+    uint64_t sum_id = 0; //Part 1
+    uint64_t sum_power = 0; //Part 2
     for (uint64_t i = 0; i < n_lines; ++i) {
         string line = lines[i];
         uint64_t id = strtol(line.data + find_char(line, ' ') + 1, NULL, 10);
         string game = (string){.data=&line.data[find_char(line, ':')] + 2, .size = line.size - find_char(line, ':') - 2};
         uint64_t rounds = 1;
+        uint64_t min_required[3] = {0, 0, 0};
         for (uint64_t i = 0; i < game.size; ++i)
             rounds += game.data[i] == ';';
         {
@@ -106,8 +110,12 @@ int main(void) {
                     uint64_t quant = strtol(play.data, NULL, 10);
                     int64_t space_index = find_char(play, ' ');
                     string color = {.data=&play.data[space_index + 1], .size = play.size - space_index - 1};
-                    for (int c = 0; c < 3; ++c)
-                        rolled[c] += quant * (strncmp(color.data, colors[c], colors_s[c]) == 0);
+                    for (int c = 0; c < 3; ++c) {
+                        bool is_c = strncmp(color.data, colors[c], colors_s[c]) == 0;
+                        rolled[c] += quant * is_c;
+                        if (is_c && min_required[c] < quant)
+                            min_required[c] = quant;
+                    }
                     p_ext = pind + 2;
                 }
 
@@ -115,12 +123,14 @@ int main(void) {
 
                 i_ext = index + 2;
             }
-            printf("%d\n", possible);
+            printf("%d - %"PRIu64"\n", possible, min_required[0] * min_required[1] * min_required[2]);
+            sum_power += min_required[0] * min_required[1] * min_required[2];
             if (possible)
                 sum_id += id;
         }
     }
     printf("Sum IDs: %"PRIu64"\n", sum_id);
+    printf("Sum Powers: %"PRIu64"\n", sum_power);
 
     free(lines);
     free(str.data);
