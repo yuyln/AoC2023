@@ -44,14 +44,8 @@ uint64_t part_1(string *lines, uint64_t rows, uint64_t cols) {
                     for (uint64_t dir = 0; dir < 8; ++dir) {
                         int64_t il = (int64_t)l + dirs[dir][0];
                         int64_t ir = (int64_t)j + dirs[dir][1];
-                        if (il < 0)
-                            il = 0;
-                        if (il >= (int64_t)rows)
-                            il = l - 1;
-                        if (ir < 0)
-                            ir = 0;
-                        if (ir >= (int64_t)cols)
-                            ir = cols - 1;
+                        il = il < 0? 0: (uint64_t)il >= rows? (int64_t)rows - 1: il;
+                        ir = ir < 0? 0: (uint64_t)ir >= cols? (int64_t)cols - 1: ir;
                         not_in_contact = not_in_contact && (is_number(CHAR_AT(il, ir)) || CHAR_AT(il, ir) == '.');
                     }
                 }
@@ -73,49 +67,40 @@ uint64_t part_2(string *lines, uint64_t rows, uint64_t cols) {
                 continue;
 
             int64_t left_ind_1 = -1;
-            int64_t right_ind_1 = -1;
             int64_t l1 = -1;
 
             int64_t left_ind_2 = -1;
-            int64_t right_ind_2 = -1;
             int64_t l2 = -1;
 
             for (uint64_t dir = 0; dir < 8; ++dir) {
                 int64_t il = (int64_t)l + dirs[dir][0];
                 int64_t ir = (int64_t)i + dirs[dir][1];
-                if (il < 0)
-                    il = 0;
-                if (il >= (int64_t)rows)
-                    il = l - 1;
-                if (ir < 0)
-                    ir = 0;
-                if (ir >= (int64_t)cols)
-                    ir = cols - 1;
+
+                il = il < 0? 0: (uint64_t)il >= rows? (int64_t)rows - 1: il;
+                ir = ir < 0? 0: (uint64_t)ir >= cols? (int64_t)cols - 1: ir;
 
                 char C = CHAR_AT(il, ir);
                 if (!is_number(C))
                     continue;
 
                 int64_t left_ind = 0;
-                int64_t right_ind = 0;
-                for (uint64_t j = ir; j < lines[l].size && is_number(CHAR_AT(il, j)); ++j) 
-                    right_ind = j;
+                //int64_t right_ind = 0;
+                //for (uint64_t j = ir; j < lines[l].size && is_number(CHAR_AT(il, j)); ++j) 
+                //    right_ind = j;
 
                 for (uint64_t j = ir; j-->0 && is_number(CHAR_AT(il, j + 1));)
                     left_ind = j + !is_number(CHAR_AT(il, j));
 
-                if (left_ind_1 == left_ind && right_ind_1 == right_ind && l1 == il)
+                if (left_ind_1 == left_ind && l1 == il)
                     continue;
 
-                if (left_ind_1 == -1 || right_ind_1 == -1 || l1 == -1) {
+                if (left_ind_1 == -1 || l1 == -1) {
                     left_ind_1 = left_ind;
-                    right_ind_1 = right_ind;
                     l1 = il;
                     continue;
                 }
 
                 left_ind_2 = left_ind;
-                right_ind_2 = right_ind;
                 l2 = il;
             }
             uint64_t number_1 = strtol(&lines[l1].str[left_ind_1], NULL, 10);
@@ -138,7 +123,7 @@ int main(int argc, const char **argv) {
     fseek(f, 0, SEEK_END);
     uint64_t f_size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    string data = (string) {.str= calloc(f_size, 1), .size = f_size};
+    string data = (string) {.str= calloc(f_size + 1, 1), .size = f_size + 1};
     fread(data.str, f_size, 1, f);
     fclose(f);
     uint64_t rows = 0;
