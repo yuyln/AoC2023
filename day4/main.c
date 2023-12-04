@@ -41,6 +41,228 @@ int64_t find_char_cstr(char *str, char c, uint64_t start, uint64_t end) {
     return -1;
 }
 
+uint64_t part_1(string *lines, uint64_t n_lines) {
+    hash_site *hash_table = calloc(HASH_SIZE, sizeof(hash_site));
+
+    uint64_t sum = 0;
+    for (uint64_t l = 0; l < n_lines; ++l) {
+        //printf("-----------------------\n");
+        string line = lines[l];
+        int64_t sep_index = find_char(line, '|');
+        int64_t number_start = find_char(line, ':');
+        for (uint64_t k = number_start; k < line.size; ++k) {
+            if (is_num(line.data[k])) {
+                number_start = k;
+                break;
+            }
+        }
+        string winning_numbers = (string){.data = &line.data[number_start], .size = sep_index - 1 - number_start};
+
+        for (uint64_t k = sep_index; k < line.size; ++k) {
+            if (is_num(line.data[k])) {
+                sep_index = k;
+                break;
+            }
+        }
+        string my_numbers = (string){.data = &line.data[sep_index], .size = line.size - sep_index};
+
+        //populate hash_table
+        {
+            //printf("%.*s\n", (int)winning_numbers.size, winning_numbers.data);
+            uint64_t i_ext = 0;
+            while(i_ext < winning_numbers.size) {
+                uint64_t number = strtol(&winning_numbers.data[i_ext], NULL, 10);
+                //printf("%"PRIu64" ", number);
+                uint64_t hash_index = number % HASH_SIZE;
+                for (uint64_t j = 0; j < HASH_CHILDREN; ++j) {
+                    hash_elem *ele = &hash_table[hash_index].items[j];
+                    if (ele->count == 0) {
+                        ele->number = number;
+                        ele->count = 1;
+                        break;
+                    }
+                    if (ele->number == number) {
+                        ele->count += 1;
+                        break;
+                    }
+                }
+
+                int64_t next_index = find_char_cstr(winning_numbers.data, ' ', i_ext, winning_numbers.size);
+                if (next_index < 0)
+                    break;
+
+                for (uint64_t k = next_index; k < winning_numbers.size; ++k) {
+                    if (is_num(winning_numbers.data[k])) {
+                        next_index = k;
+                        break;
+                    }
+                }
+                i_ext = next_index;
+            }
+            //printf("\n");
+        }
+
+        //read hash_table
+        {
+            //printf("%.*s\n", (int)my_numbers.size, my_numbers.data);
+            uint64_t i_ext = 0;
+            uint64_t cards_worth = 1;
+            while(i_ext < my_numbers.size) {
+                uint64_t number = strtol(&my_numbers.data[i_ext], NULL, 10);
+                uint64_t hash_index = number % HASH_SIZE;
+                //printf("%"PRIu64, number);
+
+                for (uint64_t j = 0; j < HASH_CHILDREN; ++j) {
+                    hash_elem ele = hash_table[hash_index].items[j];
+                    if (ele.number == number) {
+                        //printf("(%"PRIu64"x)", ele.count);
+                        cards_worth *= (uint64_t)(1) << (ele.count);
+                        break;
+                    }
+                }
+                //printf(" ");
+
+                int64_t next_index = find_char_cstr(my_numbers.data, ' ', i_ext, my_numbers.size);
+                if (next_index < 0)
+                    break;
+
+                for (uint64_t k = next_index; k < my_numbers.size; ++k) {
+                    if (is_num(my_numbers.data[k])) {
+                        next_index = k;
+                        break;
+                    }
+                }
+                i_ext = next_index;
+            }
+            //printf("\n");
+            cards_worth /= 2;
+            //printf("Worth: %"PRIu64"\n", cards_worth);
+            sum += cards_worth;
+        }
+        //printf("-----------------------\n");
+        memset(hash_table, 0, sizeof(hash_site) * HASH_SIZE);
+    }
+    free(hash_table);
+    return sum;
+}
+
+//TODO: mix with part_1
+uint64_t part_2(string *lines, uint64_t n_lines) {
+    hash_site *hash_table = calloc(HASH_SIZE, sizeof(hash_site));
+    uint64_t *scratch_pads = malloc(sizeof(uint64_t) * n_lines);
+    for (uint64_t i = 0; i < n_lines; ++i)
+        scratch_pads[i] = 1;
+
+    uint64_t sum = 0;
+    for (uint64_t l = 0; l < n_lines; ++l) {
+        //printf("-----------------------\n");
+        string line = lines[l];
+        int64_t sep_index = find_char(line, '|');
+        int64_t number_start = find_char(line, ':');
+        for (uint64_t k = number_start; k < line.size; ++k) {
+            if (is_num(line.data[k])) {
+                number_start = k;
+                break;
+            }
+        }
+        string winning_numbers = (string){.data = &line.data[number_start], .size = sep_index - 1 - number_start};
+
+        for (uint64_t k = sep_index; k < line.size; ++k) {
+            if (is_num(line.data[k])) {
+                sep_index = k;
+                break;
+            }
+        }
+        string my_numbers = (string){.data = &line.data[sep_index], .size = line.size - sep_index};
+
+        //populate hash_table
+        {
+            //printf("%.*s\n", (int)winning_numbers.size, winning_numbers.data);
+            uint64_t i_ext = 0;
+            while(i_ext < winning_numbers.size) {
+                uint64_t number = strtol(&winning_numbers.data[i_ext], NULL, 10);
+                //printf("%"PRIu64" ", number);
+                uint64_t hash_index = number % HASH_SIZE;
+                for (uint64_t j = 0; j < HASH_CHILDREN; ++j) {
+                    hash_elem *ele = &hash_table[hash_index].items[j];
+                    if (ele->count == 0) {
+                        ele->number = number;
+                        ele->count = 1;
+                        break;
+                    }
+                    if (ele->number == number) {
+                        ele->count += 1;
+                        break;
+                    }
+                }
+
+                int64_t next_index = find_char_cstr(winning_numbers.data, ' ', i_ext, winning_numbers.size);
+                if (next_index < 0)
+                    break;
+
+                for (uint64_t k = next_index; k < winning_numbers.size; ++k) {
+                    if (is_num(winning_numbers.data[k])) {
+                        next_index = k;
+                        break;
+                    }
+                }
+                i_ext = next_index;
+            }
+            //printf("\n");
+        }
+
+        //read hash_table
+        {
+            //printf("%.*s\n", (int)my_numbers.size, my_numbers.data);
+            uint64_t i_ext = 0;
+            uint64_t copies = 0;
+            while(i_ext < my_numbers.size) {
+                uint64_t number = strtol(&my_numbers.data[i_ext], NULL, 10);
+                uint64_t hash_index = number % HASH_SIZE;
+                //printf("%"PRIu64, number);
+
+                for (uint64_t j = 0; j < HASH_CHILDREN; ++j) {
+                    hash_elem ele = hash_table[hash_index].items[j];
+                    if (ele.number == number) {
+                        copies += 1;
+                        //printf("(%"PRIu64"x)", ele.count);
+                        break;
+                    }
+                }
+                //printf(" ");
+
+                int64_t next_index = find_char_cstr(my_numbers.data, ' ', i_ext, my_numbers.size);
+                if (next_index < 0)
+                    break;
+
+                for (uint64_t k = next_index; k < my_numbers.size; ++k) {
+                    if (is_num(my_numbers.data[k])) {
+                        next_index = k;
+                        break;
+                    }
+                }
+                i_ext = next_index;
+            }
+            //printf("\n");
+            for (uint64_t k = 0; k < copies; ++k) {
+                uint64_t i = l + k + 1;
+                if (i < n_lines)
+                    scratch_pads[i] += scratch_pads[l];
+            }
+        }
+        //printf("-----------------------\n");
+        memset(hash_table, 0, sizeof(hash_site) * HASH_SIZE);
+    }
+
+    for (uint64_t i = 0; i < n_lines; ++i) {
+        //printf("%"PRIu64"\n", scratch_pads[i]);
+        sum += scratch_pads[i];
+    }
+
+    free(hash_table);
+    return sum;
+}
+
 int main(int argc, const char **argv) {
     assert(argc >= 2);
 
@@ -80,109 +302,9 @@ int main(int argc, const char **argv) {
         }
     }
 
-    hash_site *hash_table = calloc(HASH_SIZE, sizeof(hash_site));
+    printf("Part 1: %"PRIu64"\n", part_1(lines, n_lines));
+    printf("Part 2: %"PRIu64"\n", part_2(lines, n_lines));
 
-    uint64_t sum = 0;
-    for (uint64_t l = 0; l < n_lines; ++l) {
-        printf("-----------------------\n");
-        string line = lines[l];
-        int64_t sep_index = find_char(line, '|');
-        int64_t number_start = find_char(line, ':');
-        for (uint64_t k = number_start; k < line.size; ++k) {
-            if (is_num(line.data[k])) {
-                number_start = k;
-                break;
-            }
-        }
-        string winning_numbers = (string){.data = &line.data[number_start], .size = sep_index - 1 - number_start};
-
-        for (uint64_t k = sep_index; k < line.size; ++k) {
-            if (is_num(line.data[k])) {
-                sep_index = k;
-                break;
-            }
-        }
-        string my_numbers = (string){.data = &line.data[sep_index], .size = line.size - sep_index};
-
-        //populate hash_table
-        {
-            printf("%.*s\n", (int)winning_numbers.size, winning_numbers.data);
-            uint64_t i_ext = 0;
-            while(i_ext < winning_numbers.size) {
-                uint64_t number = strtol(&winning_numbers.data[i_ext], NULL, 10);
-                printf("%"PRIu64" ", number);
-                uint64_t hash_index = number % HASH_SIZE;
-                for (uint64_t j = 0; j < HASH_CHILDREN; ++j) {
-                    hash_elem *ele = &hash_table[hash_index].items[j];
-                    if (ele->count == 0) {
-                        ele->number = number;
-                        ele->count = 1;
-                        break;
-                    }
-                    if (ele->number == number) {
-                        ele->count += 1;
-                        break;
-                    }
-                }
-
-                int64_t next_index = find_char_cstr(winning_numbers.data, ' ', i_ext, winning_numbers.size);
-                if (next_index < 0)
-                    break;
-
-                for (uint64_t k = next_index; k < winning_numbers.size; ++k) {
-                    if (is_num(winning_numbers.data[k])) {
-                        next_index = k;
-                        break;
-                    }
-                }
-                i_ext = next_index;
-            }
-            printf("\n");
-        }
-
-        //read hash_table
-        {
-            printf("%.*s\n", (int)my_numbers.size, my_numbers.data);
-            uint64_t i_ext = 0;
-            uint64_t cards_worth = 1;
-            while(i_ext < my_numbers.size) {
-                uint64_t number = strtol(&my_numbers.data[i_ext], NULL, 10);
-                uint64_t hash_index = number % HASH_SIZE;
-                printf("%"PRIu64, number);
-
-                for (uint64_t j = 0; j < HASH_CHILDREN; ++j) {
-                    hash_elem ele = hash_table[hash_index].items[j];
-                    if (ele.number == number) {
-                        printf("(%"PRIu64"x)", ele.count);
-                        cards_worth *= (uint64_t)(1) << (ele.count);
-                        break;
-                    }
-                }
-                printf(" ");
-
-                int64_t next_index = find_char_cstr(my_numbers.data, ' ', i_ext, my_numbers.size);
-                if (next_index < 0)
-                    break;
-
-                for (uint64_t k = next_index; k < my_numbers.size; ++k) {
-                    if (is_num(my_numbers.data[k])) {
-                        next_index = k;
-                        break;
-                    }
-                }
-                i_ext = next_index;
-            }
-            printf("\n");
-            cards_worth /= 2;
-            printf("Worth: %"PRIu64"\n", cards_worth);
-            sum += cards_worth;
-        }
-        printf("-----------------------\n");
-        memset(hash_table, 0, sizeof(hash_site) * HASH_SIZE);
-    }
-    printf("%"PRIu64"\n", sum);
-
-    free(hash_table);
     free(lines);
     free(str.data);
     return 0;
