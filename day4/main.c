@@ -260,6 +260,7 @@ uint64_t part_2(string *lines, uint64_t n_lines) {
     }
 
     free(hash_table);
+    free(scratch_pads);
     return sum;
 }
 
