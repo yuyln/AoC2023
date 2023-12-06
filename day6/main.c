@@ -24,7 +24,7 @@ uint64_t possible_ways(uint64_t total_time, uint64_t distance) {
  Time:        56     71     79     99
  Distance:   334   1135   1350   2430
  */
-//TODO: added parsing for input
+//TODO: add parsing for input
 int main(void) {
     //Part 1
     uint64_t race1 = possible_ways(56, 334);
